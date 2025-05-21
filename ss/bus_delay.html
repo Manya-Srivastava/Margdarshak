@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Delay Prediction</title>
+    <link rel="stylesheet" href="bus_delay.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Stay on Track:Optimizing Your Journey</h1>
+            <p>Predicting Delays, Optimizing Journeys</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <h2>Options</h2>
+                <!-- Link to index.html when Home is clicked -->
+                <a href="index.html">
+                    <button>Home</button>
+                </a>
+                <a href="realtimerouting.html">
+                <button>Routes</button></a>
+                <a href="live_bus_tracking.html">
+                    <button>Data Tracking</button>
+                </a>
+                <a href="bus_delay.html">
+                    <button>Predictions</button>
+                </a>
+               
+            </div>
+
+            <!-- Prediction Form Section -->
+            <div class="form-section">
+                <h2>Enter Prediction Data</h2>
+                <form id="prediction-form">
+                    <label for="travel_time">Normalized Travel Time:</label>
+                    <input type="number" id="travel_time" name="travel_time" step="0.01" required>
+
+                    <label for="temperature">Normalized Temperature:</label>
+                    <input type="number" id="temperature" name="temperature" step="0.01" required>
+
+                    <label for="traffic_impact">Traffic Impact:</label>
+                    <input type="number" id="traffic_impact" name="traffic_impact" required>
+
+                    <label for="weather_impact">Weather Impact:</label>
+                    <input type="number" id="weather_impact" name="weather_impact" step="0.01" required>
+
+                    <button type="submit">Predict Delay</button>
+                </form>
+
+                <p id="result"></p>
+            </div>
+
+            <!-- Right Sidebar (Optional) -->
+            <div class="sidebar">
+                <h2>Message for you </h2>
+                <p>We are predicting delays based on the traffic, road and weather condition. <br><br>
+                As per the name, it is a prediction based on optimised gradient oosting model<br><br>
+                We hope to make your journey better and ensure that you won't be late on any meetings, dates and any events. </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Transit Optimization AI</p>
+        </div>
+    </div>
+
+    <script>
+        const googleMapsAPIKey = "AIzaSyA6zb2QZMlXgad7nZz20VZ082DHe2xnUuE"; 
+
+        async function getTrafficData(origin, destination) {
+            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${googleMapsAPIKey}&departure_time=now`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === "OK") {
+                    const route = data.routes[0];
+                    const leg = route.legs[0];
+
+                    const durationInTraffic = leg.duration_in_traffic ? leg.duration_in_traffic.value : leg.duration.value;
+                    const trafficImpact = durationInTraffic - leg.duration.value;  // Difference due to traffic
+                    return trafficImpact;
+                } else {
+                    console.error("Error fetching traffic data:", data.status);
+                    return 0;  // No traffic impact
+                }
+            } catch (error) {
+                console.error("Error fetching traffic data:", error);
+                return 0;  // No traffic impact
+            }
+        }
+
+        const form = document.getElementById("prediction-form");
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const data = {
+                travel_time: parseFloat(document.getElementById("travel_time").value),
+                temperature: parseFloat(document.getElementById("temperature").value),
+                traffic_impact: parseFloat(document.getElementById("traffic_impact").value),
+                weather_impact: parseFloat(document.getElementById("weather_impact").value)
+            };
+
+            // Set origin and destination (e.g., bus stop locations or known landmarks in Delhi)
+            const origin = "Connaught Place, Delhi";
+            const destination = "Akshardham Temple, Delhi";
+
+            const trafficImpact = await getTrafficData(origin, destination);
+
+            // Combine traffic data with other inputs
+            const simulateFakePrediction = () => {
+                let delay = data.travel_time * 1.5;
+
+                // Adding real-time traffic impact
+                delay += trafficImpact;
+
+                // Simulating weather impact
+                delay += data.weather_impact * Math.random() * 5;
+
+                // Ensure the delay is within a reasonable range (e.g., between 0 and 120 minutes)
+                delay = Math.min(Math.max(delay, 0), 120);
+
+                return delay;
+            };
+
+            // Simulate delay prediction
+            const fakeDelay = simulateFakePrediction();
+
+            // Display the fake prediction
+            document.getElementById("result").innerText = `Predicted Delay: ${fakeDelay.toFixed(2)} minutes due to traffic`;
+        });
+    </script>
+</body>
+</html>

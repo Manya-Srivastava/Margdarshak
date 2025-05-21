@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps - Anti-Bunching Bus Routes</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const buses = [
+            { id: "DL1PD4646", location: { lat: 28.6139, lng: 77.2090 } }, // Bus 1
+            { id: "DL1PD4647", location: { lat: 28.6160, lng: 77.2150 } }, // Bus 2
+        ];
+
+        const busLocation = { lat: 28.6353, lng: 77.2219 }; // Example bus location (New Delhi Railway Station)
+        const destination = { lat: 28.5355, lng: 77.3910 }; // Example destination (Noida)
+
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: busLocation,
+            });
+
+            const busMarker = new google.maps.Marker({
+                position: busLocation,
+                map,
+                title: "Bus Location",
+                icon: {
+                    url: "https://img.icons8.com/emoji/48/bus.png",
+                    scaledSize: new google.maps.Size(32, 32),
+                },
+            });
+
+            const destinationMarker = new google.maps.Marker({
+                position: destination,
+                map,
+                title: "Destination",
+                icon: {
+                    url: "https://img.icons8.com/ios-filled/50/000000/destination.png",
+                    scaledSize: new google.maps.Size(32, 32),
+                },
+            });
+
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+
+            function optimizeRoute() {
+                // Check proximity to other buses
+                const avoidBunching = buses.some((bus) => {
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                        new google.maps.LatLng(bus.location.lat, bus.location.lng),
+                        new google.maps.LatLng(busLocation.lat, busLocation.lng)
+                    );
+                    return distance < 1000; // Example: If another bus is within 1 km
+                });
+
+                const request = {
+                    origin: busLocation,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    ...(avoidBunching && { avoidTolls: true, avoidFerries: true }), // Example constraints to adjust routes
+                };
+
+                directionsService.route(request, (result, status) => {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        directionsRenderer.setDirections(result);
+                    } else {
+                        console.error("Directions request failed:", status);
+                    }
+                });
+            }
+
+            optimizeRoute();
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>

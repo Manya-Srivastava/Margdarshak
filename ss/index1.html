@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Optimization Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>MARGDARSHAK</h1>
+            <p>Banein aapke safar ka margdarshak</p>
+        </div>
+        
+        <div class="content">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <h2>Options</h2>
+                
+                <a href="index.html">
+                <button>Home</button>
+            </a>
+                <a href="realtimerouting.html">
+                <button>Routes</button>
+            </a>
+                <!-- Added link to live_tracking.html -->
+                <a href="userinfo.html">
+                    <button>Buses Nearby</button>
+                </a>
+                <a href="bus_delay.html">
+                    <button>Predictions</button>
+                </a>
+            </div>
+            
+
+            <!-- Map Section -->
+            <div class="map-section">
+                <h2>MARGDARSHAK</h2>
+                <div id="map" class="map-placeholder">- Map goes here</div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="sidebar">
+                <h2>Bus Route Tracking</h2>
+                <canvas id="busRouteChart" class="chart-placeholder"></canvas>
+                <h3>Details</h3>
+                <p>Route: 28</p>
+                <p id="delay">Delay: 41 min</p>
+                <p>Alternative Options: 30 min</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Transit Optimization AI</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Dashboard Loaded");
+
+            const routeData = {
+                onTime: 60,     // Percentage of buses on time
+                delayed: 30,    // Percentage of buses delayed
+                rerouted: 10    // Percentage of buses rerouted
+            };
+
+            const ctx = document.getElementById('busRouteChart').getContext('2d');
+            const busRouteChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['On Time', 'Delayed', 'Rerouted'],
+                    datasets: [{
+                        label: 'Bus Route Status',
+                        data: [routeData.onTime, routeData.delayed, routeData.rerouted],
+                        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#333'
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+
+            // Example: Update delay time dynamically
+            const delayElement = document.getElementById('delay');
+            let delay = routeData.delayed;
+
+            setInterval(() => {
+                delayElement.textContent = `Delay: ${delay} min`;
+                delay = (delay + 1) % 60;  // Just for dynamic effect
+            }, 3000);
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize the map for Delhi
+            const map = L.map('map').setView([28.6139, 77.2090], 12); // Centered on Delhi with zoom level 12
+
+            // Add a tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Define custom bus icon (reduced size)
+            const busIcon = L.icon({
+                iconUrl: 'https://img.icons8.com/ios/452/bus.png', // Custom bus icon URL
+                iconSize: [24, 24], // Reduced icon size
+                iconAnchor: [12, 24], // Adjusted anchor point
+                popupAnchor: [0, -24] // Adjusted popup position
+            });
+
+            // More bus stop markers in Delhi
+            const busStops = [
+                { name: 'Connaught Place', coords: [28.6330, 77.2197] },
+                { name: 'India Gate', coords: [28.6127, 77.2295] },
+                { name: 'Akshardham Temple', coords: [28.6128, 77.2775] },
+                { name: 'Delhi University', coords: [28.7041, 77.1070] },
+                { name: 'New Delhi Railway Station', coords: [28.6353, 77.2219] },
+                { name: 'Rajiv Chowk', coords: [28.6345, 77.2185] },
+                { name: 'Chandni Chowk', coords: [28.6506, 77.2328] },
+                { name: 'Jama Masjid', coords: [28.6502, 77.2344] },
+                { name: 'Dilli Haat', coords: [28.5717, 77.2264] },
+                { name: 'Rashtrapati Bhavan', coords: [28.6128, 77.2090] },
+                { name: 'Qutub Minar', coords: [28.5245, 77.1855] }
+            ];
+
+
+            // No polyline (blue line) needed, so we remove it from the code
+        });
+    </script>
+</body>
+</html>

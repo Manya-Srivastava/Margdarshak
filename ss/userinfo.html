@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Bus Information</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #202b37;
+            color: white;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .sidebar {
+            width: 20%;
+            height: 100%;
+            background-color: #324454;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h3 {
+            margin-top: 20px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+        }
+
+        .map-container {
+            flex: 1;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .map-container #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        select, input, button {
+            padding: 10px;
+            margin: 10px;
+            border: none;
+            background-color: #5a7a93;
+            color: white;
+            cursor: pointer;
+        }
+
+        select:hover, input:hover, button:hover {
+            background-color: #48697f;
+        }
+
+        .info-panel {
+            background-color: #f0f0f047;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            background-color: #202b37;
+            color: white;
+            padding: 10px;
+        }
+    </style>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Margdarshak</h1>
+        <p>Search for bus stop and get real-time bus info.</p>
+    </div>
+
+    <div class="content">
+        <div class="sidebar">
+            <h3>Bus Search</h3>
+            <!-- Input for Bus Stop -->
+            <label for="busStopSelect">Select Bus Stop:</label>
+            <select id="busStopSelect">
+                <option value="Aakashwani Bhawan">Aakashwani Bhawan</option>
+                <option value="Connaught Place">Connaught Place</option>
+                <option value="India Gate">India Gate</option>
+                <option value="Karol Bagh">Karol Bagh</option>
+                <option value="Rajiv Chowk">Rajiv Chowk</option>
+                <option value="Hazrat Nizamuddin">Hazrat Nizamuddin</option>
+                <option value="Dwarka Sector 21">Dwarka Sector 21</option>
+                <option value="Lajpat Nagar">Lajpat Nagar</option>
+                <option value="Vasant Kunj">Vasant Kunj</option>
+                <option value="Dwarka Sector 6">Dwarka Sector 6</option>
+                <option value="Pitampura">Pitampura</option>
+                <option value="Saket">Saket</option>
+                <option value="Moolchand">Moolchand</option>
+                <option value="Mayur Vihar">Mayur Vihar</option>
+                <option value="Chandni Chowk">Chandni Chowk</option>
+                <option value="Kailash Colony">Kailash Colony</option>
+                <option value="Rohini Sector 5">Rohini Sector 5</option>
+                <option value="Gurgaon Cyber City">Gurgaon Cyber City</option>
+                <option value="Noida Sector 18">Noida Sector 18</option>
+                <option value="Vikramshila">Vikramshila</option>
+                <option value="Kalkaji Mandir">Kalkaji Mandir</option>
+                <option value="Okhla Phase 2">Okhla Phase 2</option>
+                <option value="Nehru Place">Nehru Place</option>
+                <option value="Pusa">Pusa</option>
+                <option value="Tagore Garden">Tagore Garden</option>
+                <option value="Karol Bagh Metro">Karol Bagh Metro</option>
+                <option value="Kashmere Gate">Kashmere Gate</option>
+                <option value="Mandi House">Mandi House</option>
+                <option value="Lajpat Nagar Metro">Lajpat Nagar Metro</option>
+                <option value="Sarai Kale Khan">Sarai Kale Khan</option>
+                <option value="Chhattarpur">Chhattarpur</option>
+            </select>
+
+            <!-- Button to get Bus Information -->
+            <button id="searchBuses">Search Buses</button>
+
+            <div class="info-panel" id="busInfoPanel">
+                <h4>Bus Information</h4>
+                <div id="busInfo">Select a bus stop to view buses.</div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2024 Transit Information</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').setView([28.6139, 77.2090], 12); // Center on Delhi
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Expanded bus data with more buses at each bus stop
+            const busStopsData = {
+                
+
+    "Aakashwani Bhawan": {
+        "buses": [
+            { "bus_id": "DL1PD4600", "route": "Route 102", "arrivalTime": "5 minutes", "lat": 28.6315, "lng": 77.2167 },
+            { "bus_id": "DL1PD4602", "route": "Route 204", "arrivalTime": "10 minutes", "lat": 28.6317, "lng": 77.2172 },
+            { "bus_id": "DL1PD4605", "route": "Route 205", "arrivalTime": "12 minutes", "lat": 28.6318, "lng": 77.2175 },
+            { "bus_id": "DL1PD4607", "route": "Route 208", "arrivalTime": "15 minutes", "lat": 28.6319, "lng": 77.2180 },
+            { "bus_id": "DL1PD4610", "route": "Route 210", "arrivalTime": "20 minutes", "lat": 28.6320, "lng": 77.2185 }
+        ]
+    },
+    "Connaught Place": {
+        "buses": [
+            { "bus_id": "DL1PD4603", "route": "Route 305", "arrivalTime": "7 minutes", "lat": 28.6295, "lng": 77.2158 },
+            { "bus_id": "DL1PD4604", "route": "Route 402", "arrivalTime": "12 minutes", "lat": 28.6300, "lng": 77.2165 },
+            { "bus_id": "DL1PD4606", "route": "Route 103", "arrivalTime": "14 minutes", "lat": 28.6303, "lng": 77.2170 },
+            { "bus_id": "DL1PD4608", "route": "Route 204", "arrivalTime": "18 minutes", "lat": 28.6305, "lng": 77.2175 },
+            { "bus_id": "DL1PD4611", "route": "Route 207", "arrivalTime": "22 minutes", "lat": 28.6308, "lng": 77.2180 }
+        ]
+    },
+    "India Gate": {
+        "buses": [
+            { "bus_id": "DL1PD4605", "route": "Route 501", "arrivalTime": "6 minutes", "lat": 28.6129, "lng": 77.2295 },
+            { "bus_id": "DL1PD4606", "route": "Route 303", "arrivalTime": "15 minutes", "lat": 28.6132, "lng": 77.2300 },
+            { "bus_id": "DL1PD4609", "route": "Route 202", "arrivalTime": "17 minutes", "lat": 28.6134, "lng": 77.2305 },
+            { "bus_id": "DL1PD4612", "route": "Route 404", "arrivalTime": "20 minutes", "lat": 28.6136, "lng": 77.2310 },
+            { "bus_id": "DL1PD4614", "route": "Route 707", "arrivalTime": "25 minutes", "lat": 28.6138, "lng": 77.2315 }
+        ]
+    },
+    "Karol Bagh": {
+        "buses": [
+            { "bus_id": "DL1PD4601", "route": "Route 601", "arrivalTime": "5 minutes", "lat": 28.6415, "lng": 77.2118 },
+            { "bus_id": "DL1PD4603", "route": "Route 702", "arrivalTime": "9 minutes", "lat": 28.6417, "lng": 77.2120 },
+            { "bus_id": "DL1PD4607", "route": "Route 801", "arrivalTime": "13 minutes", "lat": 28.6420, "lng": 77.2123 },
+            { "bus_id": "DL1PD4610", "route": "Route 902", "arrivalTime": "17 minutes", "lat": 28.6422, "lng": 77.2125 },
+            { "bus_id": "DL1PD4613", "route": "Route 103", "arrivalTime": "20 minutes", "lat": 28.6425, "lng": 77.2127 }
+        ]
+    },
+    "Rajiv Chowk": {
+        "buses": [
+            { "bus_id": "DL1PD4615", "route": "Route 402", "arrivalTime": "3 minutes", "lat": 28.6325, "lng": 77.2160 },
+            { "bus_id": "DL1PD4616", "route": "Route 503", "arrivalTime": "8 minutes", "lat": 28.6327, "lng": 77.2162 },
+            { "bus_id": "DL1PD4617", "route": "Route 607", "arrivalTime": "12 minutes", "lat": 28.6330, "lng": 77.2165 },
+            { "bus_id": "DL1PD4618", "route": "Route 704", "arrivalTime": "15 minutes", "lat": 28.6332, "lng": 77.2167 },
+            { "bus_id": "DL1PD4620", "route": "Route 808", "arrivalTime": "18 minutes", "lat": 28.6335, "lng": 77.2170 }
+        ]
+    },
+    "Hazrat Nizamuddin": {
+        "buses": [
+            { "bus_id": "DL1PD4621", "route": "Route 900", "arrivalTime": "6 minutes", "lat": 28.5610, "lng": 77.2505 },
+            { "bus_id": "DL1PD4622", "route": "Route 500", "arrivalTime": "12 minutes", "lat": 28.5612, "lng": 77.2508 }
+        ]
+    },
+    "Dwarka Sector 21": {
+        "buses": [
+            { "bus_id": "DL1PD4623", "route": "Route 102", "arrivalTime": "4 minutes", "lat": 28.5630, "lng": 77.0209 },
+            { "bus_id": "DL1PD4624", "route": "Route 204", "arrivalTime": "9 minutes", "lat": 28.5632, "lng": 77.0211 }
+        ]
+    },
+    "Lajpat Nagar": {
+        "buses": [
+            { "bus_id": "DL1PD4625", "route": "Route 305", "arrivalTime": "10 minutes", "lat": 28.5490, "lng": 77.2415 },
+            { "bus_id": "DL1PD4626", "route": "Route 501", "arrivalTime": "13 minutes", "lat": 28.5493, "lng": 77.2418 }
+        ]
+    },
+    "Vasant Kunj": {
+        "buses": [
+            { "bus_id": "DL1PD4627", "route": "Route 408", "arrivalTime": "15 minutes", "lat": 28.5497, "lng": 77.1064 },
+            { "bus_id": "DL1PD4628", "route": "Route 602", "arrivalTime": "18 minutes", "lat": 28.5499, "lng": 77.1067 }
+        ]
+    },
+    "Dwarka Sector 6": {
+        "buses": [
+            { "bus_id": "DL1PD4629", "route": "Route 105", "arrivalTime": "7 minutes", "lat": 28.5670, "lng": 77.0350 },
+            { "bus_id": "DL1PD4630", "route": "Route 210", "arrivalTime": "12 minutes", "lat": 28.5673, "lng": 77.0353 },
+            { "bus_id": "DL1PD4631", "route": "Route 305", "arrivalTime": "16 minutes", "lat": 28.5675, "lng": 77.0356 }
+        ]
+    },
+    "Pitampura": {
+        "buses": [
+            { "bus_id": "DL1PD4632", "route": "Route 407", "arrivalTime": "9 minutes", "lat": 28.6485, "lng": 77.1755 },
+            { "bus_id": "DL1PD4633", "route": "Route 508", "arrivalTime": "14 minutes", "lat": 28.6487, "lng": 77.1760 }
+        ]
+    },
+    "Saket": {
+        "buses": [
+            { "bus_id": "DL1PD4634", "route": "Route 609", "arrivalTime": "5 minutes", "lat": 28.5125, "lng": 77.1950 },
+            { "bus_id": "DL1PD4635", "route": "Route 710", "arrivalTime": "11 minutes", "lat": 28.5127, "lng": 77.1955 },
+            { "bus_id": "DL1PD4636", "route": "Route 810", "arrivalTime": "16 minutes", "lat": 28.5130, "lng": 77.1960 }
+        ]
+    },
+    "Moolchand": {
+        "buses": [
+            { "bus_id": "DL1PD4637", "route": "Route 111", "arrivalTime": "8 minutes", "lat": 28.6345, "lng": 77.2075 },
+            { "bus_id": "DL1PD4638", "route": "Route 222", "arrivalTime": "13 minutes", "lat": 28.6347, "lng": 77.2080 }
+        ]
+    },
+    "Mayur Vihar": {
+        "buses": [
+            { "bus_id": "DL1PD4639", "route": "Route 333", "arrivalTime": "10 minutes", "lat": 28.5745, "lng": 77.2990 },
+            { "bus_id": "DL1PD4640", "route": "Route 444", "arrivalTime": "15 minutes", "lat": 28.5748, "lng": 77.2995 }
+        ]
+    },
+    "Chandni Chowk": {
+        "buses": [
+            { "bus_id": "DL1PD4641", "route": "Route 555", "arrivalTime": "6 minutes", "lat": 28.6565, "lng": 77.2310 },
+            { "bus_id": "DL1PD4642", "route": "Route 666", "arrivalTime": "12 minutes", "lat": 28.6568, "lng": 77.2315 }
+        ]
+    },
+    "Kailash Colony": {
+        "buses": [
+            { "bus_id": "DL1PD4643", "route": "Route 777", "arrivalTime": "9 minutes", "lat": 28.5360, "lng": 77.2075 },
+            { "bus_id": "DL1PD4644", "route": "Route 888", "arrivalTime": "14 minutes", "lat": 28.5363, "lng": 77.2080 }
+        ]
+    },
+    "Rohini Sector 5": {
+        "buses": [
+            { "bus_id": "DL1PD4645", "route": "Route 999", "arrivalTime": "7 minutes", "lat": 28.7250, "lng": 77.1145 },
+            { "bus_id": "DL1PD4646", "route": "Route 1010", "arrivalTime": "13 minutes", "lat": 28.7253, "lng": 77.1150 }
+        ]
+    },
+    "Gurgaon Cyber City": {
+        "buses": [
+            { "bus_id": "DL1PD4647", "route": "Route 1111", "arrivalTime": "5 minutes", "lat": 28.4595, "lng": 77.0266 },
+            { "bus_id": "DL1PD4648", "route": "Route 1212", "arrivalTime": "10 minutes", "lat": 28.4598, "lng": 77.0270 }
+        ]
+    },
+    "Noida Sector 18": {
+        "buses": [
+            { "bus_id": "DL1PD4649", "route": "Route 1313", "arrivalTime": "8 minutes", "lat": 28.6123, "lng": 77.3720 },
+            { "bus_id": "DL1PD4650", "route": "Route 1414", "arrivalTime": "16 minutes", "lat": 28.6126, "lng": 77.3725 }
+        ]
+    },
+    "Vikramshila": {
+        "buses": [
+            { "bus_id": "DL1PD4651", "route": "Route 1515", "arrivalTime": "9 minutes", "lat": 28.7020, "lng": 77.0985 },
+            { "bus_id": "DL1PD4652", "route": "Route 1616", "arrivalTime": "14 minutes", "lat": 28.7023, "lng": 77.0990 }
+        ]
+    },
+    "Kalkaji Mandir": {
+        "buses": [
+            { "bus_id": "DL1PD4653", "route": "Route 1717", "arrivalTime": "11 minutes", "lat": 28.5450, "lng": 77.2805 },
+            { "bus_id": "DL1PD4654", "route": "Route 1818", "arrivalTime": "17 minutes", "lat": 28.5453, "lng": 77.2810 }
+        ]
+    },
+    "Okhla Phase 2": {
+        "buses": [
+            { "bus_id": "DL1PD4655", "route": "Route 1919", "arrivalTime": "10 minutes", "lat": 28.5455, "lng": 77.3215 },
+            { "bus_id": "DL1PD4656", "route": "Route 2020", "arrivalTime": "20 minutes", "lat": 28.5458, "lng": 77.3220 }
+        ]
+    },
+    "Nehru Place": {
+        "buses": [
+            { "bus_id": "DL1PD4657", "route": "Route 2121", "arrivalTime": "6 minutes", "lat": 28.5700, "lng": 77.2065 },
+            { "bus_id": "DL1PD4658", "route": "Route 2222", "arrivalTime": "12 minutes", "lat": 28.5703, "lng": 77.2070 }
+        ]
+    },
+    "Pusa": {
+        "buses": [
+            { "bus_id": "DL1PD4659", "route": "Route 2323", "arrivalTime": "7 minutes", "lat": 28.6385, "lng": 77.2215 },
+            { "bus_id": "DL1PD4660", "route": "Route 2424", "arrivalTime": "13 minutes", "lat": 28.6388, "lng": 77.2220 }
+        ]
+    },
+    "Tagore Garden": {
+        "buses": [
+            { "bus_id": "DL1PD4661", "route": "Route 2525", "arrivalTime": "5 minutes", "lat": 28.5985, "lng": 77.2775 },
+            { "bus_id": "DL1PD4662", "route": "Route 2626", "arrivalTime": "15 minutes", "lat": 28.5988, "lng": 77.2780 }
+        ]
+    },
+    "Karol Bagh Metro": {
+        "buses": [
+            { "bus_id": "DL1PD4663", "route": "Route 2727", "arrivalTime": "8 minutes", "lat": 28.6480, "lng": 77.2035 },
+            { "bus_id": "DL1PD4664", "route": "Route 2828", "arrivalTime": "18 minutes", "lat": 28.6483, "lng": 77.2040 }
+        ]
+    },
+    "Kashmere Gate": {
+        "buses": [
+            { "bus_id": "DL1PD4665", "route": "Route 2929", "arrivalTime": "9 minutes", "lat": 28.6600, "lng": 77.2295 },
+            { "bus_id": "DL1PD4666", "route": "Route 3030", "arrivalTime": "19 minutes", "lat": 28.6603, "lng": 77.2300 }
+        ]
+    },
+    "Mandi House": {
+        "buses": [
+            { "bus_id": "DL1PD4667", "route": "Route 3131", "arrivalTime": "10 minutes", "lat": 28.6160, "lng": 77.2155 },
+            { "bus_id": "DL1PD4668", "route": "Route 3232", "arrivalTime": "20 minutes", "lat": 28.6163, "lng": 77.2160 }
+        ]
+    },
+    "Lajpat Nagar Metro": {
+        "buses": [
+            { "bus_id": "DL1PD4669", "route": "Route 3333", "arrivalTime": "12 minutes", "lat": 28.5645, "lng": 77.3435 },
+            { "bus_id": "DL1PD4670", "route": "Route 3434", "arrivalTime": "22 minutes", "lat": 28.5648, "lng": 77.3440 }
+        ]
+    },
+    "Sarai Kale Khan": {
+        "buses": [
+            { "bus_id": "DL1PD4671", "route": "Route 3535", "arrivalTime": "7 minutes", "lat": 28.5895, "lng": 77.3135 },
+            { "bus_id": "DL1PD4672", "route": "Route 3636", "arrivalTime": "17 minutes", "lat": 28.5898, "lng": 77.3140 }
+        ]
+    },
+    "Chhattarpur": {
+        "buses": [
+            { "bus_id": "DL1PD4673", "route": "Route 3737", "arrivalTime": "8 minutes", "lat": 28.5870, "lng": 77.2455 },
+            { "bus_id": "DL1PD4674", "route": "Route 3838", "arrivalTime": "18 minutes", "lat": 28.5873, "lng": 77.2460 }
+        ]
+    }
+
+
+            };
+
+            // Event listener for search button click
+            document.getElementById('searchBuses').addEventListener('click', function () {
+                const busStop = document.getElementById('busStopSelect').value;
+                const buses = busStopsData[busStop]?.buses || [];
+                const busInfoPanel = document.getElementById('busInfoPanel');
+                const busInfo = document.getElementById('busInfo');
+                busInfoPanel.style.display = buses.length ? 'block' : 'none';
+                busInfo.innerHTML = buses.length
+                    ? buses.map(bus => `<p><strong>Bus ID:</strong> ${bus.bus_id} | <strong>Route:</strong> ${bus.route} | <strong>Arrival:</strong> ${bus.arrivalTime}</p>`).join('')
+                    : 'No buses available for the selected stop.';
+
+                // Clear the map and add markers for buses
+                map.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                buses.forEach(bus => {
+                    L.marker([bus.lat, bus.lng]).addTo(map)
+                        .bindPopup(`<strong>Bus ID:</strong> ${bus.bus_id}<br><strong>Route:</strong> ${bus.route}<br><strong>Arrival Time:</strong> ${bus.arrivalTime}`);
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

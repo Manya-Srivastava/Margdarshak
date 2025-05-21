@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MARGDARSHAK - Real-Time Bus Optimization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            background-color: #202b37;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        .content {
+            display: flex;
+            flex: 1;
+        }
+        .map-section {
+            flex: 2;
+            position: relative;
+        }
+        .map-section #map {
+            width: 100%;
+            height: 100%;
+        }
+        .sidebar {
+            flex: 1;
+            padding: 1rem;
+            background-color: #ffffff;
+            border-right: 2px solid #ccc;
+        }
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+        }
+        .info {
+            background-color: #eef4f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .info p {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>MARGDARSHAK</h1>
+            <p>Banein aapke safar ka margdarshak</p>
+        </div>
+        <div class="content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h2>Statistics</h2>
+                <canvas id="busStatsChart" class="chart-placeholder"></canvas>
+                <div class="info">
+                    <h3>Current Conditions</h3>
+                    <p><b>Weather:</b> <span id="weather">Sunny</span></p>
+                    <p><b>Traffic:</b> <span id="traffic">Light</span></p>
+                </div>
+            </div>
+            <!-- Map Section -->
+            <div class="map-section">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Map
+        const map = L.map('map').setView([28.6139, 77.2090], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map);
+
+        // Icons for buses
+        const icons = {
+            onTime: L.divIcon({
+                className: 'on-time',
+                html: '<div style="background: #4CAF50; border-radius: 50%; width: 12px; height: 12px;"></div>',
+            }),
+            delayed: L.divIcon({
+                className: 'delayed',
+                html: '<div style="background: #FFC107; border-radius: 50%; width: 12px; height: 12px;"></div>',
+            }),
+            rerouted: L.divIcon({
+                className: 'rerouted',
+                html: '<div style="background: #F44336; border-radius: 50%; width: 12px; height: 12px;"></div>',
+            }),
+        };
+
+        // Fake Data
+        const buses = Array.from({ length: 75 }, (_, i) => ({
+            id: `DL1PD${4645 + i}`,
+            coords: [28.6139 + Math.random() * 0.05, 77.2090 + Math.random() * 0.05],
+            status: 'On Time',
+            delay: Math.floor(Math.random() * 15),
+        }));
+
+        const weatherConditions = ['Sunny', 'Rainy', 'Windy'];
+        const trafficConditions = ['Light', 'Moderate', 'Heavy'];
+
+        // Add buses to map
+        const busMarkers = buses.map(bus => {
+            const marker = L.marker(bus.coords, { icon: icons.onTime })
+                .addTo(map)
+                .bindPopup(`<b>Bus ID:</b> ${bus.id}<br><b>Status:</b> ${bus.status}<br><b>Delay:</b> ${bus.delay} min`);
+            return marker;
+        });
+
+        // Chart.js for statistics
+        const statsChartCtx = document.getElementById('busStatsChart').getContext('2d');
+        const statsChart = new Chart(statsChartCtx, {
+            type: 'pie',
+            data: {
+                labels: ['On Time', 'Delayed', 'Rerouted'],
+                datasets: [{
+                    data: [50, 30, 20], // Initial values
+                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                },
+            },
+        });
+
+        // Update bus locations and statuses dynamically
+        setInterval(() => {
+            const weather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+            const traffic = trafficConditions[Math.floor(Math.random() * trafficConditions.length)];
+
+            document.getElementById('weather').textContent = weather;
+            document.getElementById('traffic').textContent = traffic;
+
+            let onTime = 0, delayed = 0, rerouted = 0;
+
+            buses.forEach((bus, index) => {
+                const [lat, lng] = bus.coords;
+                bus.coords = [lat + Math.random() * 0.001 - 0.0005, lng + Math.random() * 0.001 - 0.0005];
+
+                if (weather === 'Rainy' || traffic === 'Heavy') {
+                    bus.status = 'Delayed';
+                    bus.delay += Math.random() * 5;
+                    delayed++;
+                } else if (traffic === 'Moderate') {
+                    bus.status = 'Rerouted';
+                    bus.delay += Math.random() * 3;
+                    rerouted++;
+                } else {
+                    bus.status = 'On Time';
+                    bus.delay = Math.max(0, bus.delay - Math.random() * 3);
+                    onTime++;
+                }
+
+                busMarkers[index].setLatLng(bus.coords);
+                busMarkers[index].setIcon(icons[bus.status.toLowerCase()]);
+                busMarkers[index].setPopupContent(
+                    `<b>Bus ID:</b> ${bus.id}<br><b>Status:</b> ${bus.status}<br><b>Delay:</b> ${bus.delay.toFixed(1)} min`
+                );
+            });
+
+            statsChart.data.datasets[0].data = [onTime, delayed, rerouted];
+            statsChart.update();
+        }, 3000);
+    </script>
+</body>
+</html>
